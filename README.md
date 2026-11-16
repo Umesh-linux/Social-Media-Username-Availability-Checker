@@ -6,10 +6,10 @@ A comprehensive, production-grade academic mini project demonstrating how **Hash
 
 ## 🌐 Direct Application & Login Link
 
-Click the link below to directly launch and log in to the web application:
-
-* 🔗 **Live Website URL:** **[http://localhost:5000/](http://localhost:5000/)**
-* 👑 **Administrator Login:**
+* 🖥️ **Local Live Link (when running on your computer):** **[http://localhost:5000/](http://localhost:5000/)**
+* ☁️ **Free 1-Click Cloud Deployment (Render):**  
+  [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Umesh-linux/Social-Media-Username-Availability-Checker)
+* 👑 **Administrator Login Credentials:**
   * **Username:** `admin`
   * **Password:** `admin`
 * 👤 **Demo Normal User Login:**
