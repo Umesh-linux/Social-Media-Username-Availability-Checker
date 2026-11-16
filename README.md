@@ -6,8 +6,9 @@ A comprehensive, production-grade academic mini project demonstrating how **Hash
 
 ## 🌐 Direct Application & Login Link
 
-* 🖥️ **Local Live Link (when running on your computer):** **[http://localhost:5000/](http://localhost:5000/)**
-* ☁️ **Free 1-Click Cloud Deployment (Render):**  
+* 🌐 **Live Public Website (Click to Open Anywhere):** **[https://mounting-bryant-socks-demonstrates.trycloudflare.com](https://mounting-bryant-socks-demonstrates.trycloudflare.com)**
+* 🖥️ **Local Live Link (when running locally):** **[http://localhost:5000/](http://localhost:5000/)**
+* ☁️ **Permanent 1-Click Cloud Deployment (Render):**  
   [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Umesh-linux/Social-Media-Username-Availability-Checker)
 * 👑 **Administrator Login Credentials:**
   * **Username:** `admin`

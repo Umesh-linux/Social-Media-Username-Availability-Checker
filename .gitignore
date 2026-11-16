@@ -11,3 +11,6 @@ ENV/
 .vscode/
 *.swp
 *.swo
+cloudflared.exe
+live_url.txt
+run_live_tunnel.py
