@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NameCheck – Social Media Username Availability Checker Using Hashing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+    <!-- Top Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <span class="brand-icon">⚡</span>
+                <div>
+                    <h1>NameCheck: Username Availability Checker</h1>
+                    <p class="subtitle">Custom DJB2 Algorithm, Separate Chaining &amp; Bcrypt Security | Average <code>O(1)</code> Lookup</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="complexity-badge">
+                    <span class="pulse-dot"></span>
+                    <span>Search Complexity: <strong>O(1) Average</strong></span>
+                </div>
+                <div class="view-mode-toggle">
+                    <button type="button" class="view-btn active" id="viewUserBtn">👤 Public User Portal</button>
+                    <button type="button" class="view-btn" id="viewAdminBtn">👑 Admin Dashboard</button>
+                </div>
+                <div id="authStatusBadge" class="auth-pill">
+                    <span id="authStatusText">👤 Guest Mode</span>
+                    <button type="button" id="headerLogoutBtn" class="header-logout-btn" style="display:none;">🚪 Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <!-- Toast Notification Area -->
+        <div id="toast" class="toast" role="alert"></div>
+
+        <!-- ==================================================================
+             VIEW A: ADMIN DASHBOARD (PROTECTED BY ADMIN LOGIN GATE)
+             ================================================================== -->
+        <div id="adminViewContainer" class="view-container hidden">
+            <!-- Security Gate (shown when NOT authenticated as admin) -->
+            <div id="adminGateLocked" class="card admin-gate-card">
+                <div class="admin-gate-icon">🔐</div>
+                <h2>Administrator Access Verification</h2>
+                <p class="admin-gate-subtitle">Access to the Admin Dashboard requires authentication. Enter administrator credentials to proceed.</p>
+                <div class="admin-creds-hint">
+                    <span>🔑 Admin Credentials:</span>
+                    <code>Username: admin</code> &bull; <code>Password: admin</code>
+                </div>
+
+                <form id="adminGateForm" class="checker-form" onsubmit="return false;" style="margin-top:1.25rem;">
+                    <div class="form-group">
+                        <label for="adminGateUsername">Administrator Username</label>
+                        <div class="input-wrapper text-only">
+                            <span class="input-prefix">👤</span>
+                            <input type="text" id="adminGateUsername" value="admin" placeholder="admin" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminGatePassword">Administrator Password</label>
+                        <div class="input-wrapper text-only">
+                            <span class="input-prefix">🔒</span>
+                            <input type="password" id="adminGatePassword" placeholder="Enter password (admin)" required />
+                        </div>
+                    </div>
+                    <div class="action-buttons full-btn">
+                        <button type="button" id="adminGateLoginBtn" class="btn btn-primary btn-large">
+                            <span>🔓</span> Unlock &amp; Enter Admin Dashboard
+                        </button>
+                    </div>
+                </form>
+                <div id="adminGateErrorMsg" class="result-box unavailable hidden" style="margin-top:1rem;"></div>
+            </div>
+
+            <!-- Unlocked Admin Content (Contains the 9 Sections, shown only when authenticated) -->
+            <div id="adminContentUnlocked" class="hidden">
+                <!-- 9-Part Navigation Jump Bar -->
+                <nav class="admin-nav-bar">
+                    <div class="admin-nav-title">Admin Navigation:</div>
+                    <div class="admin-nav-links">
+                        <a href="#sec-overview" class="admin-nav-link active">1. Overview &amp; Stats</a>
+                        <a href="#sec-users" class="admin-nav-link">2. User Management</a>
+                        <a href="#sec-availability" class="admin-nav-link">3. Availability Analytics</a>
+                        <a href="#sec-inspector" class="admin-nav-link">4. Algorithm Inspector</a>
+                        <a href="#sec-pipeline" class="admin-nav-link">5. Execution Pipeline</a>
+                        <a href="#sec-visualization" class="admin-nav-link">6. Collision Visualization</a>
+                        <a href="#sec-performance" class="admin-nav-link">7. Performance Analytics</a>
+                        <a href="#sec-database" class="admin-nav-link">8. Database Management</a>
+                        <a href="#sec-profile" class="admin-nav-link">9. Admin Profile &amp; Logout</a>
+                    </div>
+                    <button type="button" id="adminTopLogoutBtn" class="admin-top-logout-btn">🚪 Admin Logout</button>
+                </nav>
+
+            <!-- 1. ADMIN OVERVIEW AND STATISTICS -->
+            <section class="card admin-section" id="sec-overview">
+                <div class="card-header">
+                    <div class="section-title-wrap">
+                        <span class="sec-badge">1</span>
+                        <h2>Admin Overview and Statistics</h2>
+                    </div>
+                    <span class="tag tag-accent">System Vital Signs</span>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon ig">📸</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Instagram Accounts</span>
+                            <span class="stat-value" id="stat-instagram">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon fb">👥</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Facebook Accounts</span>
+                            <span class="stat-value" id="stat-facebook">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon tw">✖</div>
+                        <div class="stat-info">
+                            <span class="stat-label">X (Twitter) Accounts</span>
+                            <span class="stat-value" id="stat-x">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon in">💼</div>
+                        <div class="stat-info">
+                            <span class="stat-label">LinkedIn Accounts</span>
+                            <span class="stat-value" id="stat-linkedin">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card highlight">
+                        <div class="stat-icon total">🗄️</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Users Stored</span>
+                            <span class="stat-value" id="stat-total">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary KPI bar -->
+                <div class="admin-kpi-bar">
+                    <div class="kpi-item">
+                        <span class="kpi-label">Active Hashing Engine</span>
+                        <strong class="kpi-value" style="color:#10b981;">Online (DJB2 &times; 33)</strong>
+                    </div>
+                    <div class="kpi-item">
+                        <span class="kpi-label">Search Complexity</span>
+                        <strong class="kpi-value code-font" style="color:#4f46e5;">O(1) Average</strong>
+                    </div>
+                    <div class="kpi-item">
+                        <span class="kpi-label">Total Queries Handled</span>
+                        <strong class="kpi-value code-font" id="kpi-total-queries">0</strong>
+                    </div>
+                    <div class="kpi-item">
+                        <span class="kpi-label">Password Cipher</span>
+                        <strong class="kpi-value">Bcrypt (Cost 12)</strong>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. REGISTERED USER MANAGEMENT -->
+            <section class="card admin-section" id="sec-users">
+                <div class="card-header">
+                    <div class="section-title-wrap">
+                        <span class="sec-badge">2</span>
+                        <h2>Registered User Management</h2>
+                    </div>
+                    <div class="history-actions">
+                        <span class="badge-count" id="adminUsersCountBadge">0 registered</span>
+                        <button type="button" id="adminRefreshUsersBtn" class="btn btn-sm btn-outline">🔄 Refresh</button>
+                    </div>
+                </div>
+
+                <!-- Administrator Management Controls Box -->
+                <div class="admin-controls-card">
+                    <div class="admin-controls-header">
+                        <div class="admin-controls-badge">
+                            <span class="control-crown">👑</span>
+                            <div>
+                                <h3 class="admin-controls-title">Administrator Management Controls</h3>
+                                <p class="admin-controls-desc">You have full administrative rights to remove any registered user account from both SQLite and the in-memory Hash Table, or trigger simulated email verification.</p>
+                            </div>
+                        </div>
+                        <div class="admin-controls-actions">
+                            <button type="button" id="adminVerifyAllBtn" class="btn btn-sm btn-outline-success">
+                                <span>✉️</span> Verify All Pending Emails
+                            </button>
+                            <button type="button" id="adminRefreshUsersBtn2" class="btn btn-sm btn-outline">
+                                <span>🔄</span> Reload Directory
+                            </button>
+                        </div>
+                    </div>
+                    <div class="admin-controls-features">
+                        <div class="control-feature-item">
+                            <span class="feat-icon">🗑️</span>
+                            <div class="feat-text">
+                                <strong>Bi-Directional User Removal:</strong>
+                                <span>Deletes user records from SQLite and immediately evicts bucket nodes from the in-memory Hash Table, instantly freeing the username back for public registration.</span>
+                            </div>
+                        </div>
+                        <div class="control-feature-item">
+                            <span class="feat-icon">✉️</span>
+                            <div class="feat-text">
+                                <strong>Simulated Email Verification:</strong>
+                                <span>Verifies user email addresses, updates status badges across the system, and commits verification timestamps to the audit log.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table" id="adminUsersTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Full Name</th>
+                                <th>Username</th>
+                                <th>Email Address</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Platform</th>
+                                <th>DJB2 Hash</th>
+                                <th>Bucket #</th>
+                                <th>Registered Time</th>
+                                <th>Administrative Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersTableBody">
+                            <tr><td colspan="11" class="text-center empty-state">No users loaded yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 3. USERNAME AVAILABILITY ANALYTICS -->
+            <section class="card admin-section" id="sec-availability">
+                <div class="card-header">
+                    <div class="section-title-wrap">
+                        <span class="sec-badge">3</span>
+                        <h2>Username Availability Analytics</h2>
+                    </div>
+                    <span class="tag tag-accent">Query Breakdown &amp; Ranking</span>
+                </div>
+
+                <div class="availability-analytics-grid">
+                    <div class="analytics-stat-card">
+                        <span class="avail-label">Total Availability Lookups</span>
+                        <span class="avail-val" id="avail-total-queries">0</span>
+                        <span class="avail-sub">Lifetime system queries</span>
+                    </div>
+                    <div class="analytics-stat-card">
+                        <span class="avail-label">Available Username %</span>
+                        <span class="avail-val" style="color:#10b981;" id="avail-pct">0%</span>
+                        <span class="avail-sub" id="avail-count-sub">0 successful finds</span>
+                    </div>
+                    <div class="analytics-stat-card">
+                        <span class="avail-label">Taken / Collision %</span>
+                        <span class="avail-val" style="color:#ef4444;" id="taken-pct">0%</span>
+                        <span class="avail-sub" id="taken-count-sub">0 conflicts detected</span>
+                    </div>
+                </div>
+
+                <h3 class="subsection-title" style="margin-top:1.25rem;">Top Most Frequently Searched Usernames:</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Username</th>
+                                <th>Target Platform</th>
+                                <th>Search Frequency</th>
+                                <th>Availability Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topSearchedTableBody">
+                            <tr><td colspan="5" class="text-center empty-state">No query data collected yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 4. LIVE ALGORITHM INSPECTOR -->
+            <section class="card admin-section" id="sec-inspector">
+                <div class="card-header">
+                    <div class="section-title-wrap">
+                        <span class="sec-badge">4</span>
+                        <h2>Live Algorithm Inspector</h2>
+                    </div>
+                    <span class="tag tag-accent">Real-Time Backend Execution</span>
+                </div>
+
+                <p class="inspector-lead">Values calculated dynamically by the Python backend on each query (no hardcoded demonstration data).</p>
+
+                <div class="inspector-table-wrap">
+                    <table class="inspector-table">
+                        <tbody>
+                            <tr>
+                                <td class="insp-label">Input Username:</td>
+                                <td class="insp-val" id="insp-username"><span class="placeholder-text">None (Search a username below)</span></td>
+                            </tr>
+                            <tr>
+                                <td class="insp-label">Hash Function:</td>
+                                <td class="insp-val code-font"><strong style="color: #4f46e5;">DJB2</strong> (Prime 5381 &times; 33 + ASCII)</td>
+                            </tr>
+                            <tr>
+                                <td class="insp-label">Calculated Hash Value:</td>
+                                <td class="insp-val code-font highlight-val" id="insp-hash">Pending Query</td>
+                            </tr>
+                            <tr>
+                                <td class="insp-label">Bucket Index (M=10007):</td>
+                                <td class="insp-val code-font highlight-val" id="insp-bucket">Pending Query</td>
+                            </tr>
+                            <tr>
+                                <td class="insp-label">Collision Status:</td>
+                                <td class="insp-val" id="insp-collision"><span class="badge-status available">No Collision</span></td>
+                            </tr>
+                            <tr>
+                                <td class="insp-label">Search Complexity:</td>
+                                <td class="insp-val code-font"><strong style="color: #10b981;">O(1) Average</strong> | O(n) Worst-case</td>
+                            </tr>
+                            <tr>
+                                <td class="insp-label">Chain Traversal Steps:</td>
+                                <td class="insp-val code-font" id="insp-probes">0 steps</td>
+                            </tr>
+                            <tr>
+                                <td class="insp-label">Total Search Count:</td>
+                                <td class="insp-val code-font" id="insp-search-count">0 times queried</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Interactive Inspector Query Bar -->
+                <div class="visual-search-bar" style="margin-top: 1rem;">
+                    <input type="text" id="adminInspectInput" placeholder="Enter username to inspect live algorithm execution (e.g. alex_2026)..." />
+                    <button type="button" id="adminInspectBtn" class="btn btn-primary">
+                        <span>🔬</span> Execute Algorithm Inspector
+                    </button>
+                </div>
+            </section>
+
+            <!-- 5. HASH TABLE EXECUTION PIPELINE -->
+            <section class="card admin-section" id="sec-pipeline">
+                <div class="card-header">
+                    <div class="section-title-wrap">
+                        <span class="sec-badge">5</span>
+                        <h2>Hash Table Execution Pipeline</h2>
+                    </div>
+                    <span class="tag tag-accent">Search Complexity: O(1) Average</span>
+                </div>
+
+                <div class="pipeline-box" style="border:none; padding:0; box-shadow:none;">
+                    <div class="pipeline-steps">
+                        <div class="pipe-step">
+                            <span class="pipe-num">1</span>
+                            <div class="pipe-content">
+                                <strong>Input Normalization:</strong> Input username string is trimmed and converted to lowercase: <code>username.strip().lower()</code> to guarantee case-insensitive uniqueness.
+                            </div>
+                        </div>
+                        <div class="pipe-step">
+                            <span class="pipe-num">2</span>
+                            <div class="pipe-content">
+                                <strong>DJB2 Rolling Polynomial Hash:</strong> Initial prime seed 5381 is shifted left by 5 and added to hash: <code>((hash &lt;&lt; 5) + hash) + ord(char)</code>.
+                            </div>
+                        </div>
+                        <div class="pipe-step">
+                            <span class="pipe-num">3</span>
+                            <div class="pipe-content">
+                                <strong>Modulo Bucket Index Mapping:</strong> 32-bit integer is distributed across table slots using modulo arithmetic: <code>bucket = hash % 10007</code>.
+                            </div>
+                        </div>
+                        <div class="pipe-step highlight-step">
+                            <span class="pipe-num">4</span>
+                            <div class="pipe-content">
+                                <strong>Step 4 – Username Availability Lookup:</strong> The system calculates the bucket index and searches the corresponding chain to determine whether the username already exists. Lookup is <strong>O(1) average</strong> under suitable hashing and load-factor conditions, with <strong>O(n) worst-case complexity</strong>.
+                            </div>
+                        </div>
+                        <div class="pipe-step">
+                            <span class="pipe-num">5</span>
+                            <div class="pipe-content">
+                                <strong>Separate Chaining Resolution:</strong> If two usernames hash to the same bucket index, they are safely appended as a linked-list node in that bucket without overwriting.
+                            </div>
+                        </div>
+                        <div class="pipe-step">
+                            <span class="pipe-num">6</span>
+                            <div class="pipe-content">
+                                <strong>Dual-Layer Storage &amp; Bcrypt Security:</strong> Saves credentials permanently in SQLite with <strong>Bcrypt (cost 12)</strong> while maintaining the high-speed in-memory hash table in sync.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. COLLISION RESOLUTION VISUALIZATION -->
+            <section class="card admin-section" id="sec-visualization">
+                <div class="card-header">
+                    <div class="section-title-wrap">
+                        <span class="sec-badge">6</span>
+                        <div>
+                            <h2>Collision Resolution Visualization</h2>
+                            <p class="section-desc">Demonstrates <code>h(k) = k mod 7</code> where collisions happen quickly, illustrating Separate Chaining.</p>
+                        </div>
+                    </div>
+                    <button type="button" id="adminRefreshVisualizerBtn" class="btn btn-sm btn-outline">🔄 Refresh Chains</button>
+                </div>
+
+                <div class="visual-search-bar">
+                    <input type="text" id="adminVisualizeInput" placeholder="Type username to trace its bucket chain (e.g. alex_dev, tech_guru)..." />
+                    <button type="button" id="adminTraceHashBtn" class="btn btn-primary">
+                        <span>🔍</span> Trace Traversal Steps
+                    </button>
+                </div>
+
+                <div id="traceReportBox" class="trace-report hidden">
+                    <div class="trace-header">
+                        <h4 id="traceTitle">Traversal Trace</h4>
+                        <span id="traceCollisionBadge" class="badge-status"></span>
+                    </div>
+                    <div id="traceDetails" class="trace-details"></div>
+                </div>
+
+                <h3 class="subsection-title">Current Bucket State ($M = 7$ Modulo Buckets):</h3>
+                <div class="buckets-display-grid" id="bucketsDisplayGrid"></div>
+
+                <div class="chaining-note">
+                    <strong>💡 How Separate Chaining Works:</strong> Each bucket contains a pointer to the head of a linked list. When multiple keys produce the same remainder modulo 7, new nodes are appended to that bucket's list. Lookup traverses the chain in $O(1)$ average time.
+                </div>
+            </section>
+
+            <!-- 7. PERFORMANCE ANALYTICS -->
+            <section class="card admin-section" id="sec-performance">
+                <div class="card-header">
+                    <div class="section-title-wrap">
+                        <span class="sec-badge">7</span>
+                        <h2>Performance Analytics</h2>
+                    </div>
+                    <span class="tag tag-accent">Load Factor &alpha; = N / M</span>
+                </div>
+
+                <div class="analytics-metrics-grid" id="analyticsSummaryGrid">
+                    <div class="analytics-box">
+                        <span class="a-title">Load Factor (&alpha;)</span>
+                        <span class="a-val" id="analytics-load-factor">0.00000</span>
+                        <small class="a-sub">&alpha; = Entries (N) / Capacity (M)</small>
+                    </div>
+                    <div class="analytics-box">
+                        <span class="a-title">Total Usernames Stored</span>
+                        <span class="a-val" id="analytics-total-entries">0</span>
+                        <small class="a-sub">Active entries across tables</small>
+                    </div>
+                    <div class="analytics-box">
+                        <span class="a-title">Occupied Buckets</span>
+                        <span class="a-val" id="analytics-occupied-buckets">0</span>
+                        <small class="a-sub">Buckets with &ge; 1 item</small>
+                    </div>
+                    <div class="analytics-box">
+                        <span class="a-title">Total Collisions</span>
+                        <span class="a-val" id="analytics-total-collisions">0</span>
+                        <small class="a-sub">Resolved via Chaining</small>
+                    </div>
+                    <div class="analytics-box">
+                        <span class="a-title">Average Chain Length</span>
+                        <span class="a-val" id="analytics-avg-chain">0.00</span>
+                        <small class="a-sub">Across occupied buckets</small>
+                    </div>
+                    <div class="analytics-box">
+                        <span class="a-title">Maximum Chain Length</span>
+                        <span class="a-val" id="analytics-max-chain">0</span>
+                        <small class="a-sub">Deepest bucket chain</small>
+                    </div>
+                </div>
+
+                <h3 class="subsection-title">Platform-Specific Hash Table Metrics:</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Platform</th>
+                                <th>Capacity ($M$)</th>
+                                <th>Entries ($N$)</th>
+                                <th>Occupied Buckets</th>
+                                <th>Collisions</th>
+                                <th>Load Factor ($\alpha$)</th>
+                                <th>Avg Chain</th>
+                                <th>Max Chain</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analyticsTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="explanation-box" style="margin-top: 1.5rem;">
+                    <h3>📐 Academic Load Factor (&alpha;) Proof</h3>
+                    <p>The load factor $\alpha = \frac{N}{M}$ measures how full the hash table is. In our production configuration with $M = 10,007$, the load factor remains small ($\alpha \ll 0.75$), guaranteeing that average bucket chains contain fewer than 2 elements. This mathematically verifies the constant time search performance <strong>$O(1)$</strong>.</p>
+                </div>
+            </section>
+
+            <!-- 8. DATABASE MANAGEMENT -->
+            <section class="card admin-section" id="sec-database">
+                <div class="card-header">
+                    <div class="section-title-wrap">
+                        <span class="sec-badge">8</span>
+                        <h2>Database Management</h2>
+                    </div>
+                    <span class="tag tag-success">SQLite Storage Engine</span>
+                </div>
+
+                <div class="db-mgmt-grid">
+                    <div class="db-card">
+                        <h4>🌱 Seed Demo Data</h4>
+                        <p>Populate 12 pre-configured user profiles with real names, emails, and Bcrypt passwords across all 4 platforms.</p>
+                        <button type="button" id="adminSeedBtn" class="btn btn-outline" style="margin-top: 0.75rem;">
+                            <span>🌱</span> Seed 12 Demo Accounts
+                        </button>
+                    </div>
+                    <div class="db-card">
+                        <h4>🗑️ Clear Audit &amp; Search Log</h4>
+                        <p>Reset the query history table without deleting registered user accounts.</p>
+                        <button type="button" id="adminClearHistoryBtn" class="btn btn-danger" style="margin-top: 0.75rem;">
+                            <span>🗑️</span> Clear Search History
+                        </button>
+                    </div>
+                    <div class="db-card">
+                        <h4>🗄️ SQLite Engine Info</h4>
+                        <ul class="db-info-list" id="dbInfoList">
+                            <li>Database: <code>usernames.db</code></li>
+                            <li>SQLite Version: <span id="dbSqliteVer">Loading...</span></li>
+                            <li>Total User Records: <strong id="dbUserCount">0</strong></li>
+                            <li>Total Query Logs: <strong id="dbHistoryCount">0</strong></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Search History Table -->
+                <h3 class="subsection-title" style="margin-top:1.5rem;">Activity &amp; Query Audit Trail:</h3>
+                <div class="table-responsive">
+                    <table class="data-table" id="adminHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Username</th>
+                                <th>Platform</th>
+                                <th>Action</th>
+                                <th>Result Status</th>
+                                <th>Search Frequency</th>
+                                <th>DJB2 Hash</th>
+                                <th>Bucket #</th>
+                                <th>Date &amp; Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminHistoryTableBody">
+                            <tr><td colspan="9" class="text-center empty-state">No search history recorded yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 9. ADMIN PROFILE AND LOGOUT -->
+            <section class="card admin-section" id="sec-profile">
+                <div class="card-header">
+                    <div class="section-title-wrap">
+                        <span class="sec-badge">9</span>
+                        <h2>Admin Profile and Logout</h2>
+                    </div>
+                    <span class="tag" style="background:#fef3c7; color:#92400e;">Master Administrator</span>
+                </div>
+
+                <div class="admin-profile-box">
+                    <div class="profile-avatar">👑</div>
+                    <div class="profile-details">
+                        <h3>Project Administrator</h3>
+                        <p class="profile-meta">Role: <strong>Superuser Administrator</strong> | System Evaluator</p>
+                        <div class="profile-credentials">
+                            <span>Username: <code>admin</code></span>
+                            <span>Password: <code>admin</code></span>
+                            <span>Email: <code>admin@namecheck.edu</code></span>
+                            <span>Security: <code>Bcrypt Blowfish (Cost 12)</code></span>
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        <button type="button" id="adminLogoutSectionBtn" class="btn btn-danger btn-large">
+                            <span>🚪</span> Sign Out of Administrator Portal
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Security Inspector Checklist -->
+                <div class="security-checklist" style="margin-top: 1.5rem;">
+                    <div class="sec-item">
+                        <span class="sec-icon">🔒</span>
+                        <div>
+                            <strong>Bcrypt Adaptive Hashing:</strong> Passwords are never stored as plain text. Salted and hashed with <code>bcrypt (cost 12)</code>.
+                        </div>
+                    </div>
+                    <div class="sec-item">
+                        <span class="sec-icon">🛡️</span>
+                        <div>
+                            <strong>Parameterized SQL Queries:</strong> All database operations utilize parameterized bindings (<code>?</code> placeholders) preventing SQL Injection.
+                        </div>
+                    </div>
+                    <div class="sec-item">
+                        <span class="sec-icon">✉️</span>
+                        <div>
+                            <strong>Email Validation &amp; Verification:</strong> Proper regex ensures valid RFC email formatting with simulated email verification.
+                        </div>
+                    </div>
+                    <div class="sec-item">
+                        <span class="sec-icon">🚫</span>
+                        <div>
+                            <strong>Zero Frontend Exposure:</strong> Password hashes are strictly contained on the server.
+                        </div>
+                    </div>
+                </div>
+            </section>
+            </div> <!-- End of #adminContentUnlocked -->
+        </div> <!-- End of #adminViewContainer -->
+
+
+        <!-- ==================================================================
+             VIEW B: PUBLIC USER PORTAL (SEARCH & REGISTRATION)
+             ================================================================== -->
+        <div id="userViewContainer" class="view-container active-view">
+            <!-- User Portal Header -->
+            <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #eef2ff, #f8fafc); border-color: #c7d2fe;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <div>
+                        <h2>👤 Public User Portal</h2>
+                        <p style="font-size:0.875rem; color:#475569;">Normal users can check username availability in <code>O(1)</code> time, register accounts, and manage/remove their registered handles.</p>
+                    </div>
+                    <div class="auth-role-tabs" style="margin:0; display:flex; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                        <button type="button" class="auth-subtab active" id="userTabSearchBtn">🔍 Check Availability</button>
+                        <button type="button" class="auth-subtab" id="userTabRegBtn">📝 Register Account</button>
+                        <button type="button" class="auth-subtab" id="userTabLoginBtn">🔑 User Sign In</button>
+                        <button type="button" id="userPortalTopLogoutBtn" class="user-top-logout-btn" style="display:none;">🚪 Logout</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 1: User Search & Availability -->
+            <section class="card primary-card user-portal-panel" id="userSearchPanel">
+                <div class="card-header">
+                    <h2>🔍 Check Username Availability</h2>
+                    <span class="tag tag-accent">Search Complexity: O(1) Average</span>
+                </div>
+
+                <form id="publicCheckForm" class="checker-form" onsubmit="return false;">
+                    <div class="form-group">
+                        <label for="publicUsernameInput">Desired Username</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">@</span>
+                            <input type="text" id="publicUsernameInput" placeholder="e.g. alex_coder, tech_guru" autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Select Social Media Platform</label>
+                        <div class="platform-selector">
+                            <label class="platform-option">
+                                <input type="radio" name="publicPlatform" value="instagram" checked />
+                                <span class="platform-btn ig-btn">📷 Instagram</span>
+                            </label>
+                            <label class="platform-option">
+                                <input type="radio" name="publicPlatform" value="facebook" />
+                                <span class="platform-btn fb-btn">📘 Facebook</span>
+                            </label>
+                            <label class="platform-option">
+                                <input type="radio" name="publicPlatform" value="x" />
+                                <span class="platform-btn x-btn">✖ X / Twitter</span>
+                            </label>
+                            <label class="platform-option">
+                                <input type="radio" name="publicPlatform" value="linkedin" />
+                                <span class="platform-btn in-btn">💼 LinkedIn</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button type="button" id="publicCheckBtn" class="btn btn-primary">
+                            <span>🔎</span> Check Availability
+                        </button>
+                        <button type="button" id="publicGoRegisterBtn" class="btn btn-success">
+                            <span>📝</span> Register This Username
+                        </button>
+                    </div>
+                </form>
+
+                <div id="publicResultBox" class="result-box hidden">
+                    <div id="publicResultStatus" class="result-status"></div>
+                    <div id="publicResultMessage" class="result-message"></div>
+                    <div id="publicSuggestionsContainer" class="suggestions-container hidden">
+                        <div class="suggestions-header">✨ Available Suggestions:</div>
+                        <div id="publicSuggestionsList" class="suggestions-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 2: User Registration Form -->
+            <section class="card primary-card user-portal-panel hidden" id="userRegPanel">
+                <div class="card-header">
+                    <h2>📝 Create Account &amp; Register Username</h2>
+                    <span class="tag tag-success">Full Verification</span>
+                </div>
+
+                <form id="publicRegisterForm" class="checker-form" onsubmit="return false;">
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="pubRegFullName">Full Name <span class="req">*</span></label>
+                            <div class="input-wrapper text-only">
+                                <span class="input-prefix">👤</span>
+                                <input type="text" id="pubRegFullName" placeholder="User's full name" required />
+                            </div>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="pubRegUsername">Username <span class="req">*</span></label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">@</span>
+                                <input type="text" id="pubRegUsername" placeholder="Unique username" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="pubRegEmail">Email Address <span class="req">*</span></label>
+                            <div class="input-wrapper text-only">
+                                <span class="input-prefix">✉️</span>
+                                <input type="email" id="pubRegEmail" placeholder="name@example.com" required />
+                            </div>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Target Social Platform <span class="req">*</span></label>
+                            <select id="pubRegPlatform" class="form-select">
+                                <option value="instagram">📸 Instagram</option>
+                                <option value="facebook">📘 Facebook</option>
+                                <option value="x">✖ X (Twitter)</option>
+                                <option value="linkedin">💼 LinkedIn</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="pubRegPassword">Password <span class="req">*</span></label>
+                            <div class="input-wrapper text-only">
+                                <span class="input-prefix">🔒</span>
+                                <input type="password" id="pubRegPassword" placeholder="Secure password" required />
+                            </div>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="pubRegConfirmPassword">Confirm Password <span class="req">*</span></label>
+                            <div class="input-wrapper text-only">
+                                <span class="input-prefix">🔐</span>
+                                <input type="password" id="pubRegConfirmPassword" placeholder="Re-enter password" required />
+                            </div>
+                            <small class="field-hint" id="pubPasswordMatchHint">Verify password</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group terms-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="pubRegTerms" required />
+                            <span class="checkbox-label">I agree to the Terms &amp; Conditions and Privacy Policy <span class="req">*</span></span>
+                        </label>
+                    </div>
+
+                    <div class="action-buttons full-btn">
+                        <button type="button" id="pubRegisterSubmitBtn" class="btn btn-success btn-large">
+                            <span>🚀</span> Register Account &amp; Username
+                        </button>
+                    </div>
+                </form>
+
+                <div id="pubRegResultBox" class="result-box hidden"></div>
+            </section>
+
+            <!-- Panel 3: User Login Form -->
+            <section class="card primary-card user-portal-panel hidden" id="userLoginPanel">
+                <div class="card-header">
+                    <h2>🔑 Normal User Login</h2>
+                    <span class="tag tag-accent">Manage Your Usernames</span>
+                </div>
+
+                <div class="demo-credential-box">
+                    <span>💡 Quick Demo User:</span>
+                    <button type="button" id="pubFillUserDemoBtn" class="btn btn-xs btn-outline">
+                        Fill Demo User (alex_dev / DemoPassword123!)
+                    </button>
+                </div>
+
+                <form id="pubLoginForm" class="checker-form" onsubmit="return false;">
+                    <div class="form-group">
+                        <label for="pubLoginIdentifier">Username or Email Address</label>
+                        <div class="input-wrapper text-only">
+                            <span class="input-prefix">👤</span>
+                            <input type="text" id="pubLoginIdentifier" placeholder="Username or email" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="pubLoginPassword">Password</label>
+                        <div class="input-wrapper text-only">
+                            <span class="input-prefix">🔒</span>
+                            <input type="password" id="pubLoginPassword" placeholder="Your password" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Platform Namespace</label>
+                        <select id="pubLoginPlatform" class="form-select">
+                            <option value="instagram">📸 Instagram</option>
+                            <option value="facebook">📘 Facebook</option>
+                            <option value="x">✖ X (Twitter)</option>
+                            <option value="linkedin">💼 LinkedIn</option>
+                        </select>
+                    </div>
+                    <div class="action-buttons full-btn">
+                        <button type="button" id="pubLoginSubmitBtn" class="btn btn-primary btn-large">
+                            <span>🔓</span> Sign In as Normal User
+                        </button>
+                    </div>
+                </form>
+
+                <div id="pubLoginResultBox" class="result-box hidden"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p><strong>Social Media Username Availability Checker Using Hashing</strong></p>
+        <p class="disclaimer">⚠️ System Notice: Username availability is determined against the local SQLite database and in-memory Hash Tables. Real-world availability checks require official third-party platform APIs.</p>
+    </footer>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
