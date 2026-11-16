@@ -4,6 +4,20 @@ A comprehensive, production-grade academic mini project demonstrating how **Hash
 
 ---
 
+## 🌐 Direct Application & Login Link
+
+Click the link below to directly launch and log in to the web application:
+
+* 🔗 **Live Website URL:** **[http://localhost:5000/](http://localhost:5000/)**
+* 👑 **Administrator Login:**
+  * **Username:** `admin`
+  * **Password:** `admin`
+* 👤 **Demo Normal User Login:**
+  * **Username:** `alex_dev`
+  * **Password:** `DemoPassword123!`
+
+---
+
 ## 🏛️ Project Architecture & Technologies Used
 
 | Technology / Component | Role & Implementation Details |
