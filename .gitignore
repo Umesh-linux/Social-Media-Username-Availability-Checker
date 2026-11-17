@@ -14,3 +14,4 @@ ENV/
 cloudflared.exe
 live_url.txt
 run_live_tunnel.py
+usernames.db
